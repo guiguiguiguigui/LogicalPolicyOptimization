@@ -8,8 +8,8 @@ import torch.nn.utils as utils
 
 from normalized_actions import NormalizedActions
 
-from policy_1layer import SingleLayerPolicy
-from policy_2layer import TwoLayerPolicy
+from policies.policy_1layer import SingleLayerPolicy
+from policies.policy_2layer import TwoLayerPolicy
 
 parser = argparse.ArgumentParser()
 # model & env selection
@@ -48,7 +48,7 @@ if args.layers == 1:
     policy = SingleLayerPolicy(args.hidden_size, env.observation_space.shape[0], env.action_space)
 elif args.layers== 2:
     policy = TwoLayerPolicy(args.hidden_size, env.observation_space.shape[0], env.action_space)
-agent = LPO(args.hidden_size, env.observation_space.shape[0], env.action_space,policy)
+agent = LPO(args.hidden_size, env.observation_space.shape[0], env.action_space, args.constraint_size, policy)
 
 dir = 'ckpt_' + env_name
 if not os.path.exists(dir):    

@@ -16,14 +16,14 @@ from dreal.api import CheckSatisfiability, Minimize
 
 
 class LPO:
-    def __init__(self, hidden_size, num_inputs, action_space, policy):
+    def __init__(self, hidden_size, num_inputs, action_space, constraint_size, policy):
         self.action_space = action_space
         self.num_inputs = num_inputs
         self.hidden_size = hidden_size
-        #self.model = SingleLayerPolicy(hidden_size, num_inputs, action_space)
+        self.constraint_size = constraint_size
+
         self.model = policy
         self.model.train()
-
         weights, limits = self.model.generate_variable_limits(hidden_size, num_inputs, action_space, [-1,1])
 
         self.vars = weights
@@ -71,7 +71,7 @@ class LPO:
                     constraints.append(c)
 
 
-        if len(constraints) < 1:
+        if len(constraints) < self.constraint_size:
             #If there are not enough traing samples, we postpone training to next iteration
             self.constraints = constraints
             self.training_samples["states"] = np.concatenate([self.training_samples["states"],rounded_states])
