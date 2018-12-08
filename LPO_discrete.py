@@ -47,7 +47,7 @@ class LPO:
         for r in rewards[::-1]:
             discounted_rewards = [r + gamma*discounted_rewards[0]] + discounted_rewards
 
-        rounded_states = np.around(states, 2) #to be experimented
+        rounded_states = np.around(states, 2) #to be experimented with
 
         constraints = self.constraints 
 
@@ -55,7 +55,7 @@ class LPO:
             for j, j_state in enumerate(rounded_states[i+1:]):
                 if np.all(np.equal(i_state, j_state)) and (actions[i] != actions[j]):
                     #need to explicitly formulate these things 
-                    print "constraint! state: " 
+                    print "constraint %d! state: " % (len(constraints)+1)
                     print i_state
                     prob = self.model.forward_symbolic(self.vars, i_state)
                     c = ((prob[actions[i]] - prob[actions[j]]) * (discounted_rewards[i] - discounted_rewards[j]) > 0)
@@ -63,13 +63,12 @@ class LPO:
             for j, j_state in enumerate(self.training_samples["states"]):
                 if np.all(np.equal(i_state, j_state)) and (actions[i] != self.training_samples["actions"][j]):
                     #need to explicitly formulate these things 
-                    print "constraint! state: " 
+                    print "constraint %d! state: " % (len(constraints)+1)
                     print i_state
                     prob = self.model.forward_symbolic(self.vars, i_state)
                     c = ((prob[actions[i]] - prob[self.training_samples["actions"][j]]) * \
                      (discounted_rewards[i] - self.training_samples["discounted_rewards"][j]) > 0)
                     constraints.append(c)
-
 
         if len(constraints) < self.constraint_size:
             #If there are not enough traing samples, we postpone training to next iteration

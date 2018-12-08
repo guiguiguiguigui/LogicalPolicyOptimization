@@ -15,12 +15,12 @@ Use the default hyperparameters.
 
 a simple test run:
 ```
-python main.py --num_rollout 50 --hidden_size 10 --constraint_size 1
+python main.py --num_rollout 50 --layers 1 --hidden_size 10 --constraint_size 1
 ```
 
 running it for real:
 ```
-python main.py --num_rollout 1000 --hidden_size 15 --constraint_size 10
+python main.py --env_name CartPole-v0 --num_rollout 5000 --layers 2 --hidden_size 10 --constraint_size 50
 ```
 ## Reference
 - [pytorch example](https://github.com/pytorch/examples/blob/master/reinforcement_learning/reinforce.py)
