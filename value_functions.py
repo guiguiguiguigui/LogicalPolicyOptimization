@@ -29,7 +29,7 @@ class nnValueFunction(nn.Module):
         y = pred.view(-1) #equivalent of reshape, (?,1) --> (?,)
         return y
     
-    def fit(self, X, y, n=20):
+    def fit(self, X, y):
         assert X.shape[0] == y.shape[0]
         for epoch in range(self.n_epochs):
             running_loss = 0.0
