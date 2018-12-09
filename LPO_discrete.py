@@ -30,7 +30,7 @@ class LPO:
         self.limits = limits
         self.constraints = []
         self.training_samples = {"states": np.array([]).reshape(0,4),
-                                  "discounted_rewards":np.array([]), 
+                                  "advantage":np.array([]), 
                                   "actions":np.array([]).astype(int)}
 
     def select_action(self, state):
@@ -41,11 +41,7 @@ class LPO:
         entropy = - (probs*probs.log()).sum()
         return action[0], log_prob, entropy
 
-    def update_parameters(self, states, actions, rewards, log_probs, entropies, gamma):
-
-        discounted_rewards = [0]
-        for r in rewards[::-1]:
-            discounted_rewards = [r + gamma*discounted_rewards[0]] + discounted_rewards
+    def update_parameters(self, states, actions, advantage):
 
         rounded_states = np.around(states, 2) #to be experimented with
 
@@ -58,7 +54,7 @@ class LPO:
                     print "constraint %d! state: " % (len(constraints)+1)
                     print i_state
                     prob = self.model.forward_symbolic(self.vars, i_state)
-                    c = ((prob[actions[i]] - prob[actions[j]]) * (discounted_rewards[i] - discounted_rewards[j]) > 0)
+                    c = ((prob[actions[i]] - prob[actions[j]]) * (advantage[i] - advantage[j]) > 0)
                     constraints.append(c)
             for j, j_state in enumerate(self.training_samples["states"]):
                 if np.all(np.equal(i_state, j_state)) and (actions[i] != self.training_samples["actions"][j]):
@@ -67,20 +63,22 @@ class LPO:
                     print i_state
                     prob = self.model.forward_symbolic(self.vars, i_state)
                     c = ((prob[actions[i]] - prob[self.training_samples["actions"][j]]) * \
-                     (discounted_rewards[i] - self.training_samples["discounted_rewards"][j]) > 0)
+                     (advantage[i] - self.training_samples["advantage"][j]) > 0)
                     constraints.append(c)
 
         if len(constraints) < self.constraint_size:
             #If there are not enough traing samples, we postpone training to next iteration
             self.constraints = constraints
             self.training_samples["states"] = np.concatenate([self.training_samples["states"],rounded_states])
-            self.training_samples["discounted_rewards"] = np.concatenate([self.training_samples["discounted_rewards"], discounted_rewards])
+            self.training_samples["advantage"] = np.concatenate([self.training_samples["advantage"], advantage])
             # hack. if the sequence terminates, there will be 1 more state than action
             # we pad the action sequence such that their indices align 
             actions_padding = [-1]*(len(rounded_states)-len(actions))
             self.training_samples["actions"] = np.concatenate([self.training_samples["actions"],actions,actions_padding])
-            assert(len(self.training_samples["states"]) == len(self.training_samples["discounted_rewards"]))
+            assert(len(self.training_samples["states"]) == len(self.training_samples["advantage"]))
             assert(len(self.training_samples["states"]) == len(self.training_samples["actions"]))
+
+            return False
 
         else:
             print("# of Constraints: %d "%len(constraints))
@@ -107,11 +105,13 @@ class LPO:
             #re-initialize
             self.constraints = []
             self.training_samples = {"states": np.array([]).reshape(0,4), 
-                                    "discounted_rewards":np.array([]), 
+                                    "advantage":np.array([]), 
                                     "actions":np.array([]).astype(int)}
+            return True
     
     def get_weights_from_result(self, result, print_=True):
         if print_:
+            print "Check_Satisfiability result:"
             print result
 
         layers = self.model.children()
@@ -119,6 +119,7 @@ class LPO:
         for k,l in enumerate(layers):
 
             if print_:
+                print "Old weights of layer %d" %(k+1)
                 print l.weight.data #old weights
 
             l_weights = l.weight.data.tolist()
@@ -132,6 +133,15 @@ class LPO:
                         #update only if current weight is not in the solved lower/upper bound
             updated.append(torch.Tensor(l_weights))
             if print_:
+                print "Updated weights of layer %d" %(k+1)
                 print updated[-1]
 
         return updated
+
+
+    #small helper function
+    def discount(self, rewards, gamma):
+        discounted_rewards = [0]
+        for r in rewards[::-1]:
+            discounted_rewards = [r + gamma*discounted_rewards[0]] + discounted_rewards
+        return discounted_rewards

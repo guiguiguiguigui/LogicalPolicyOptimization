@@ -13,14 +13,14 @@ This repo currently only supports the **CartPole-v0** enviornment. Other continu
 ## Run
 Use the default hyperparameters.
 
-a simple test run:
+a simple test run: (solving take ~2s)
 ```
-python main.py --num_rollout 50 --layers 1 --hidden_size 10 --constraint_size 1
+python main.py --hidden_size 5 --gamma 0.9 --constraint_size 3 --iter 2
 ```
 
-running it for real:
+running it for real: (solving take ~40s)
 ```
-python main.py --env_name CartPole-v0 --num_rollout 5000 --layers 2 --hidden_size 10 --constraint_size 50
+python main.py --hidden_size 7 --gamma 0.9 --constraint_size 30 --iter 20
 ```
 ## Reference
 - [pytorch example](https://github.com/pytorch/examples/blob/master/reinforcement_learning/reinforce.py)
