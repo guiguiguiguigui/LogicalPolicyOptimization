@@ -11,8 +11,7 @@ import torch.nn.utils as utils
 import torchvision.transforms as T
 from torch.autograd import Variable
 
-import dreal.symbolic as symbolic
-from dreal.api import CheckSatisfiability, Minimize
+import dreal
 
 
 class LPO:
@@ -87,9 +86,9 @@ class LPO:
             print("optimizer starts")
             #print(constraints)
             #print constraints
-            f_sat = symbolic.logical_and(*constraints)
+            f_sat = dreal.logical_and(*constraints)
             timer_start = time.time()
-            result = CheckSatisfiability(f_sat, 1)
+            result = dreal.CheckSatisfiability(f_sat, 1)
             if not result:
                 #what happens if not satisfiable?
                 print("not satisfiable, move on")

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import dreal.symbolic as symbolic
+import dreal
 
 class TwoLayerPolicy(nn.Module):
     def __init__(self, hidden_size, num_inputs, action_space):
@@ -28,14 +28,14 @@ class TwoLayerPolicy(nn.Module):
             ex = 0
             for j in range(self.linear1.weight.size(1)):
                 ex += inputs[j]*layer1_weights[i][j]
-            layer1.append(symbolic.tanh(ex))
+            layer1.append(dreal.tanh(ex))
 
         layer2 = []
         for i in range(self.linear2.weight.size(0)):
             ex = 0
             for j in range(self.linear2.weight.size(1)):
                 ex += layer1[j] * layer2_weights[i][j]
-            layer2.append(symbolic.tanh(ex))
+            layer2.append(dreal.tanh(ex))
 
         layer3 = []
         for i in range(self.linear3.weight.size(0)):
@@ -44,8 +44,8 @@ class TwoLayerPolicy(nn.Module):
                 ex += layer2[j]*layer3_weights[i][j]
             layer3.append(ex)
 
-        softmax = [ symbolic.exp(layer3[0])/(symbolic.exp(layer3[0]) + symbolic.exp(layer3[1])),
-                    symbolic.exp(layer3[1])/(symbolic.exp(layer3[0]) + symbolic.exp(layer3[1]))] 
+        softmax = [ dreal.exp(layer3[0])/(dreal.exp(layer3[0]) + dreal.exp(layer3[1])),
+                    dreal.exp(layer3[1])/(dreal.exp(layer3[0]) + dreal.exp(layer3[1]))] 
         return softmax
 
     def generate_variable_limits(self, hidden_size, num_inputs, action_space, bounds):
@@ -53,17 +53,17 @@ class TwoLayerPolicy(nn.Module):
         layer1_weights = [[0 for i in range(num_inputs)] for j in range(hidden_size)] #placeholder
         for i in range(hidden_size):
             for j in range(num_inputs):
-                layer1_weights[i][j] = symbolic.Variable("A" + str(i) + "_" + str(j))
+                layer1_weights[i][j] = dreal.Variable("A" + str(i) + "_" + str(j))
         
         layer2_weights = [[0 for i in range(hidden_size)] for j in range(hidden_size)]
         for i in range(hidden_size):
             for j in range(hidden_size):
-                layer2_weights[i][j] = symbolic.Variable("B" + str(i) + "_" + str(j))
+                layer2_weights[i][j] = dreal.Variable("B" + str(i) + "_" + str(j))
 
         layer3_weights = [[0 for i in range(hidden_size)] for j in range(action_space.n)]
         for i in range(action_space.n):
             for j in range(hidden_size):
-                layer3_weights[i][j] = symbolic.Variable("C" + str(i) + "_" + str(j))
+                layer3_weights[i][j] = dreal.Variable("C" + str(i) + "_" + str(j))
 
         limits = []
         var_lb, var_ub = bounds[0], bounds[1]
