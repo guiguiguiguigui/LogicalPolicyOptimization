@@ -21,7 +21,7 @@ parser.add_argument('--gamma', type=float, default=0.99, metavar='G', help='disc
 parser.add_argument('--seed', type=int, default=123, metavar='N',help='random seed (default: 123)')
 parser.add_argument('--num_steps', type=int, default=1000, metavar='N', help='max episode length (default: 1000)')
 parser.add_argument('--hidden_size', type=int, default=15, metavar='N', help='number of hidden neurons (default: 100)')
-parser.add_argument('--layers', type=int, default=2, metavar='N', help='number of layers inf the policy NN')
+parser.add_argument('--layers', type=int, default=1, metavar='N', help='number of layers inf the policy NN')
 # LPO parameters
 parser.add_argument('--constraint_size',type=int, default=10, metavar='N', help='number of constraint to be solved each time')
 parser.add_argument('--iter', type=int, default=10, metavar='N', help='number of iterations of solving x constraits')
@@ -100,7 +100,7 @@ def main():
 
             # Estimate advantage function using baseline vf (these are lists!).
             discounted_rewards = torch.Tensor(agent.discount(rewards, args.gamma))
-            vpreds = vf(torch.Tensor(obs)) #list of value function's predictions of obs
+            vpreds = vf.predict(obs) #list of value function's predictions of obs
             advs = discounted_rewards - vpreds
 
             #re-fit value function baseline

@@ -88,7 +88,7 @@ class LPO:
             #print constraints
             f_sat = dreal.logical_and(*constraints)
             timer_start = time.time()
-            result = dreal.CheckSatisfiability(f_sat, 1)
+            result = dreal.CheckSatisfiability(f_sat, 0.1)
             if not result:
                 #what happens if not satisfiable?
                 print("not satisfiable, move on")
