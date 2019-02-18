@@ -13,17 +13,22 @@ from torch.autograd import Variable
 
 import dreal
 
-
 class LPO:
     def __init__(self, hidden_size, num_inputs, action_space, constraint_size, policy):
         self.action_space = action_space
         self.num_inputs = num_inputs
         self.hidden_size = hidden_size
         self.constraint_size = constraint_size
-
         self.model = policy
-        self.model.train()
-        weights, limits = self.model.generate_variable_limits(hidden_size, num_inputs, action_space, [-1,1])
+
+        self.isLinear = False
+        try:
+            self.model.train()
+        except AttributeError:
+            self.isLinear = True
+            print("linear policy here")
+            pass #linear policy
+        weights, limits = self.model.generate_variable_limits(hidden_size, num_inputs, action_space, [-50,50])
 
         self.vars = weights
         self.limits = limits
@@ -34,11 +39,20 @@ class LPO:
 
     def select_action(self, state):
         probs = self.model(Variable(state))   
-        action = probs.multinomial(len(probs)).data
-        prob = probs[:, action[0,0]].view(1, -1)
-        log_prob = prob.log()
-        entropy = - (probs*probs.log()).sum()
-        return action[0], log_prob, entropy
+        if self.isLinear:
+            # TODO: this only works in th cartpole case
+            action = np.where(np.random.multinomial(1,probs)==1)[0][0]
+            action = int(action)
+            # TODO: implement
+            log_prob, entropy = 0,0
+        else:
+            actions = probs.multinomial(len(probs)).data
+            action = actions[0][0].numpy()
+            prob = probs[:, actions[0,0]].view(1, -1)
+            log_prob = prob.log()
+            entropy = - (probs*probs.log()).sum()
+
+        return action, log_prob, entropy
 
     def update_parameters(self, states, actions, advantage):
 
@@ -88,7 +102,7 @@ class LPO:
             #print constraints
             f_sat = dreal.logical_and(*constraints)
             timer_start = time.time()
-            result = dreal.CheckSatisfiability(f_sat, 0.1)
+            result = dreal.CheckSatisfiability(f_sat, 0.01)
             if not result:
                 #what happens if not satisfiable?
                 print("not satisfiable, move on")
@@ -113,6 +127,25 @@ class LPO:
             print "Check_Satisfiability result:"
             print result
 
+        if self.isLinear:
+            l = self.model.coef
+            if print_:
+                print "Old coefficients:"
+                print l #old weights
+            updated = []
+            for i in range(len(l)):
+                print i
+                index = result.index(self.vars[i])
+                lb = result[index].lb()
+                ub = result[index].ub()
+                if l[i] < lb or l[i] > ub:
+                    l[i] = (lb+ub)/2
+            if print_:
+                print "Updated coefficients:"
+                print l
+            return l
+
+        # neural network update
         layers = self.model.children()
         updated = []
         for k,l in enumerate(layers):

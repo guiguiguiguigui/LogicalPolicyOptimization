@@ -10,6 +10,7 @@ from normalized_actions import NormalizedActions
 
 from policies.policy_1layer import SingleLayerPolicy
 from policies.policy_2layer import TwoLayerPolicy
+from policies.linear_policy import LinearPolicy
 from value_functions import nnValueFunction
 
 parser = argparse.ArgumentParser()
@@ -57,7 +58,9 @@ if not os.path.exists(ckpt):
 '''
 Create policy, value function, and agent
 '''
-if args.layers == 1:
+if args.layers == 0: #linear policy
+    policy = LinearPolicy(args.hidden_size, env.observation_space.shape[0], env.action_space) 
+elif args.layers == 1:
     policy = SingleLayerPolicy(args.hidden_size, env.observation_space.shape[0], env.action_space)
 elif args.layers== 2:
     policy = TwoLayerPolicy(args.hidden_size, env.observation_space.shape[0], env.action_space)
@@ -86,9 +89,9 @@ def main():
             for t in range(args.num_steps):
                 action, log_prob, entropy = agent.select_action(state)
                 acs.append(action)
-                action = action.cpu()
-
-                next_state, reward, rollout_done, _ = env.step(action.numpy()[0])
+                #action = action.cpu()
+                
+                next_state, reward, rollout_done, _ = env.step(action)
                 obs.append(next_state)
                 rewards.append(reward)
                 entropies.append(entropy)
@@ -115,8 +118,8 @@ def main():
             print("Iter: {}, Rollout: {}, reward: {}".format(i_iter, count_rollouts, np.sum(rewards)))
             count_rollouts += 1
         
-        if i_iter%args.ckpt_freq == 0:
-               torch.save(agent.model.state_dict(), os.path.join(ckpt, 'lpo-'+str(i_iter)+'.pkl'))
+        #if i_iter%args.ckpt_freq == 0:
+        #       torch.save(agent.model.state_dict(), os.path.join(ckpt, 'lpo-'+str(i_iter)+'.pkl'))
 
     env.close()
 
