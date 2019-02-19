@@ -1,4 +1,4 @@
-# LogicalPolicyOptimization
+# LogicalPolicyOptimization - Linear
 
 PyTorch implementation in development.     
 This repo currently only supports the **CartPole-v0** enviornment. Other continuous and discrete envs in OpenAI gym is comming soon. 

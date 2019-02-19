@@ -60,10 +60,6 @@ Create policy, value function, and agent
 '''
 if args.layers == 0: #linear policy
     policy = LinearPolicy(args.hidden_size, env.observation_space.shape[0], env.action_space) 
-elif args.layers == 1:
-    policy = SingleLayerPolicy(args.hidden_size, env.observation_space.shape[0], env.action_space)
-elif args.layers== 2:
-    policy = TwoLayerPolicy(args.hidden_size, env.observation_space.shape[0], env.action_space)
 
 agent = LPO(args.hidden_size, env.observation_space.shape[0], env.action_space, args.constraint_size, policy)
 vf = nnValueFunction(ob_dim=env.observation_space.shape[0])
@@ -102,16 +98,18 @@ def main():
                     break
 
             # Estimate advantage function using baseline vf (these are lists!).
-            discounted_rewards = torch.Tensor(agent.discount(rewards, args.gamma))
-            vpreds = vf.predict(obs) #list of value function's predictions of obs
-            advs = discounted_rewards - vpreds
+            # deprecated for now
+            #discounted_rewards = torch.Tensor(agent.discount(rewards, args.gamma))
+            #vpreds = vf.predict(obs) #list of value function's predictions of obs
+            #advs = discounted_rewards - vpreds
 
+            advs = agent.discount(rewards, args.gamma)
             #re-fit value function baseline
-            vf.fit(torch.Tensor(obs), discounted_rewards)
+            #vf.fit(torch.Tensor(obs), discounted_rewards)
 
             # policy update! (if we have enough constraints)
-            std_adv_n = (advs - advs.mean()) / (advs.std() + 1e-8)
-            iter_done = agent.update_parameters(obs, acs, std_adv_n.detach().numpy())
+            #std_adv_n = (advs - advs.mean()) / (advs.std() + 1e-8)
+            iter_done = agent.update_parameters(obs, np.array(acs).astype(int), np.array(advs))# std_adv_n.detach().numpy())
             if iter_done:
                 break
             
@@ -125,3 +123,11 @@ def main():
 
 if __name__ == '__main__':
     main()
+    (
+        (-6.02162 * 
+            (-1 - 
+                (-1 / (1 + exp((0.01 * coef_0 - 0.21 * coef_1 + 0.01 * coef_2 + 0.29 * coef_3 - coef_4)))) 
+              + (1 / (1 + exp((0.01 * coef_0 - 0.21 * coef_1 + 0.01 * coef_2 + 0.29 * coef_3 - coef_4))))
+            )
+        )
+        > 0)
