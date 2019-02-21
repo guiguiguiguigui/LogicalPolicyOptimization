@@ -9,11 +9,11 @@ class LinearPolicy(object):
         self.action_space = action_space #output dimention
         num_outputs = action_space.n
         self.num_inputs = num_inputs
-        self.coef = np.random.rand(num_inputs+1)
+        self.coef = np.random.rand(num_inputs)
     
     def forward(self, inputs):
         x = inputs[0]
-        y = np.dot(x, self.coef[:-1]) + self.coef[-1]
+        y = np.dot(x, self.coef) + 1 #offset
         y_prob = 1 / (1 + math.exp(-y)) #sigmoid fuction
         probs = [1-y_prob, y_prob]  
         return probs
@@ -29,10 +29,9 @@ class LinearPolicy(object):
     
     def forward_symbolic_y(self, var, inputs):
         x = inputs
-        var_coef = var
-        y = var_coef[-1]
+        y = 1
         for i in range(len(inputs)):
-            y += x[i] * var_coef[i] 
+            y += x[i] * var[i] 
         return y
 
 
@@ -40,7 +39,7 @@ class LinearPolicy(object):
         lb, ub = bounds
         coef_vars = []
         limits = []
-        for i in range(num_inputs+1):
+        for i in range(num_inputs):
             v = dreal.Variable("coef_"+str(i))
             coef_vars.append(v)
             limits.append((v <= ub))

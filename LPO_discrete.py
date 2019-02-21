@@ -104,11 +104,12 @@ class LPO:
 
         else:
             print("# of Constraints: %d "%len(self.constraints))
-            all_constraints = self.constraints #+self.limits 
+            all_constraints = self.constraints +self.limits 
             #print constraints
             print("optimizer starts")
             #print(constraints)
             #print constraints
+
             f_sat = dreal.logical_and(*all_constraints)
             timer_start = time.time()
             result = dreal.CheckSatisfiability(f_sat, 0.0001)
